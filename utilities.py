@@ -7,6 +7,11 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, r
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
 
 
 def load_data(filepath):
@@ -45,6 +50,8 @@ def data_counter(data, predictand):
 
     return percentage_true_data_points
 
+        
+
 def preprocessing(data, predictand_name):
     """
     Visualizes raw data before any analysis as an important step prior to analysis.
@@ -55,32 +62,26 @@ def preprocessing(data, predictand_name):
     y = data[predictand_name]
     features = data.drop(columns=predictand_name)  # features only
  
-    # print("Creating pairplot...")
+    print("Creating pairplot...")
 
-    # sns.set_theme(style="ticks")  # nicer style
-    # pairplot = sns.pairplot(
-    #     pd.concat([features, y], axis=1),
-    #     hue=predictand,
-    #     palette='Set2',
-    #     markers='o',
-    #     plot_kws={'s': 20, 'alpha': 0.6},
-    #     diag_kind='hist'
-    # )
+    sns.set_theme(style="ticks")  # nicer style
+    pairplot = sns.pairplot(
+        pd.concat([features, y], axis=1),
+        hue=predictand_name,
+        palette='Set2',
+        markers='o',
+        plot_kws={'s': 20, 'alpha': 0.6},
+        diag_kind='hist'
+    )
 
-    # # Reduce font size of x and y labels
-    # for ax in pairplot.axes.flatten():
-    #     ax.xaxis.label.set_size(8)   # X-axis label
-    #     ax.yaxis.label.set_size(8)   # Y-axis label
-    #     ax.tick_params(axis='both', labelsize=6)  # tick labels
-        
-    # # Save figure
-    # pairplot.savefig("figures/pairplot.png")
-    # plt.close()
+    # Save figure
+    pairplot.savefig("figures/pairplot.png")
+    plt.close()
         
     # Compute percentage of True values in target
     percentage_true_data_points = data_counter(features, y)
     
-    return percentage_true_data_points, data, y
+    return percentage_true_data_points, features, y
 
 
 def confusion_matrix(actual, predicted):
@@ -118,12 +119,12 @@ def logistic_regression(data, predictand):
     # Call confusion_matrix function
     acc, prec, rec, f1 = confusion_matrix(y_test, y_pred)
 
-    return rec
+    return model, rec
 
 
 
 def smote(data, predictand):
-        #drop or feature engineer, smote
+
 
     old_percentage_true_data_points = data_counter(data, predictand)
 
@@ -138,10 +139,53 @@ def smote(data, predictand):
     return x_smoted, y_smoted
 
 
-# def decision_tree():
+def decision_tree(data, predictand):
 
-# def random_forest():
-#     """
-#     creates a random forest model to predict whether
-#     a certain day is picni-able
-#     """
+    X_train, X_test, y_train, y_test = train_test_split( #creating testing training chunks
+        data, predictand, test_size=0.2, random_state=42
+    )
+
+    depths = range(1, 21) #creating a list of potential depths
+    train_scores = [] #creating lists to store resulting scores for comparison and depth shortlisting purposes
+    test_scores = []
+
+    for depth in depths: #training model with each depth
+        model = DecisionTreeClassifier(max_depth=depth, random_state=42)
+        model.fit(X_train, y_train)
+
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
+
+        train_scores.append(accuracy_score(y_train, y_train_pred))
+        test_scores.append(accuracy_score(y_test, y_test_pred))
+
+    plt.plot(depths, train_scores, label="Train Accuracy") #plotting graph of depth vs accuracy
+    plt.plot(depths, test_scores, label="Test Accuracy")
+    plt.xlabel("Tree Depth")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.savefig("figures/depth_optimization.png")
+    plt.close()
+
+    best_depth = depths[test_scores.index(max(test_scores))]
+    print("Best depth:", best_depth) #shortlisting best depth, ie best score with least depth
+
+    final_model = DecisionTreeClassifier(max_depth=best_depth, random_state=42)
+    final_model.fit(X_train, y_train) #creating final model off shortlisted depth
+
+    plt.figure(figsize=(20,10)) #plotting final binary desicion tree
+    plot_tree(
+        final_model,
+        feature_names = data.columns,
+        class_names=[str(c) for c in predictand.unique()],
+        filled=True
+    )
+
+    plt.savefig("figures/tree_plot.png")
+    plt.close()
+
+    y_pred = final_model.predict(X_test)
+    acc = accuracy_score(y_test, y_pred) #calculating accuracy
+    
+    return final_model, acc
+
