@@ -77,7 +77,8 @@ def preprocessing(data, predictand_name):
     # Save figure
     pairplot.savefig("figures/pairplot.png")
     plt.close()
-        
+    print("The result of the pair plotting is in the figures folder.")
+
     # Compute percentage of True values in target
     percentage_true_data_points = data_counter(features, y)
     
@@ -187,5 +188,7 @@ def decision_tree(data, predictand):
     y_pred = final_model.predict(X_test)
     acc = accuracy_score(y_test, y_pred) #calculating accuracy
     
+    print("The depth optimization and final tree visualizations are in the figures folder.")
+
     return final_model, acc
 
