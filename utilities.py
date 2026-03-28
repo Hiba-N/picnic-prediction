@@ -1,11 +1,12 @@
 import pandas as pd
-import seaborn
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
-
+import pandas as pd
+from imblearn.over_sampling import SMOTE
+import seaborn as sns
 
 def load_data(filepath):
     """
@@ -43,7 +44,7 @@ def preprocessing(data):
     checks data from normalacy (add complete description here)
     """
 
-    seaborn.pairplot(data, hue ='day')
+    sns.pairplot(data, hue ='day')
     plt.show()
 
     percentage_true_data_points = data_counter(data)
@@ -99,7 +100,15 @@ def smote(data):
 
     old_percentage_true_data_points = data_counter(data)
 
-    #data = smote here
+    smote = SMOTE(sampling_strategy='minority', random_state=42)
+
+    x = data[:, :-1]  # all columns except last
+    y = data[:, -1]   # last column as target
+
+    x_smoted, y_smoted = smote.fit_resample(x, y)
+
+    data[:, :-1] = x_smoted
+    data[:, -1]  = y_smoted
 
     new_percentage_true_data_points = data_counter(data)
 
