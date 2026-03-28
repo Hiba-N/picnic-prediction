@@ -1,5 +1,5 @@
 # picnic-prediction
-predicting whether a day is suitable for a picnic in Budapest, Hungary based off weather parameters
+predicting whether a day is suitable for a picnic in Budapest, Hungary + Basel, Switzerland based off weather parameters
 
 
 
