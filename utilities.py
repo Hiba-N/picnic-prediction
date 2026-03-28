@@ -8,6 +8,7 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 import seaborn as sns
 
+
 def load_data(filepath):
     """
     function that takes in data from a csv and loads it into a dataframe
@@ -15,41 +16,71 @@ def load_data(filepath):
     """
 
     data = pd.read_csv(filepath)
-    data = pd.dropna(data)
+    data = data.dropna()
     
     #extracting year from date column as we may choose to use year as a predictand
     #to account for climate warming, or general decadal changes in weather patterns
     data['DATE'] = pd.to_datetime(data['DATE'])
-    data['YEAR'] = data.dt.year
+    data['YEAR'] = data['DATE'].dt.year
+    data.drop('DATE', axis=1, inplace=True)
 
     return data #returning loaded data as a geopandas data frame for analysis
 
-def data_counter(data):
-    #check trues and falses
-    total_data_points = data.count()
-    true_data_points = data.count(data[data['BUDAPEST_picnic_weather'] == True])
-    false_data_points = data.count(data[data['BUDAPEST_picnic_weather'] == False])
+def data_counter(data, predictand):
+    """
+    Counts total, True, and False points for a boolean column.
+    Returns percentage of True values.
+    """
+    total_data_points = len(data)
+    true_data_points = sum(predictand)
+    false_data_points = total_data_points - true_data_points
 
     print("The total amount of points is: ", total_data_points)
-    print("The amount of true data points is:" , true_data_points)
-    print("The amount of false data points is:" , false_data_points)
+    print("The amount of true data points is:", true_data_points)
+    print("The amount of false data points is:", false_data_points)
 
-    percentage_true_data_points = (true_data_points/(total_data_points))*100
+    percentage_true_data_points = (true_data_points / total_data_points) * 100
 
-    return percentage_true_data_points
-
-def preprocessing(data):
-    """
-    visualizes raw data before any analysis as important step prior to any analysis
-    checks data from normalacy (add complete description here)
-    """
-
-    sns.pairplot(data, hue ='day')
-    plt.show()
-
-    percentage_true_data_points = data_counter(data)
+    print("The percentage of true_data_points is: ", percentage_true_data_points)
 
     return percentage_true_data_points
+
+def preprocessing(data, predictand_name):
+    """
+    Visualizes raw data before any analysis as an important step prior to analysis.
+    Checks data for normality and relationships between variables.
+    """
+      
+    # Separate target and features
+    y = data[predictand_name]
+    features = data.drop(columns=predictand_name)  # features only
+ 
+    # print("Creating pairplot...")
+
+    # sns.set_theme(style="ticks")  # nicer style
+    # pairplot = sns.pairplot(
+    #     pd.concat([features, y], axis=1),
+    #     hue=predictand,
+    #     palette='Set2',
+    #     markers='o',
+    #     plot_kws={'s': 20, 'alpha': 0.6},
+    #     diag_kind='hist'
+    # )
+
+    # # Reduce font size of x and y labels
+    # for ax in pairplot.axes.flatten():
+    #     ax.xaxis.label.set_size(8)   # X-axis label
+    #     ax.yaxis.label.set_size(8)   # Y-axis label
+    #     ax.tick_params(axis='both', labelsize=6)  # tick labels
+        
+    # # Save figure
+    # pairplot.savefig("figures/pairplot.png")
+    # plt.close()
+        
+    # Compute percentage of True values in target
+    percentage_true_data_points = data_counter(features, y)
+    
+    return percentage_true_data_points, data, y
 
 
 def confusion_matrix(actual, predicted):
@@ -67,19 +98,15 @@ def confusion_matrix(actual, predicted):
     return acc, prec, rec, f1
 
 
-def logistic_regression(data):
+def logistic_regression(data, predictand):
     """
     carries out logistic regression on the dataset
     """
 
     # logistic regression
+    x_train, x_test, y_train, y_test = train_test_split(data, predictand, test_size=0.20, random_state=23)
 
-    x = data[:, :-1]  # all columns except last
-    y = data[:, -1]   # last column as target
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=23)
-
-    model = LogisticRegression()
+    model = LogisticRegression(max_iter=1000)
     model.fit(x_train, y_train)
 
     accuracy = accuracy_score(y_test, model.predict(x_test)) * 100
@@ -95,31 +122,26 @@ def logistic_regression(data):
 
 
 
-def smote(data):
+def smote(data, predictand):
         #drop or feature engineer, smote
 
-    old_percentage_true_data_points = data_counter(data)
+    old_percentage_true_data_points = data_counter(data, predictand)
 
     smote = SMOTE(sampling_strategy='minority', random_state=42)
+    x_smoted, y_smoted = smote.fit_resample(data, predictand)
 
-    x = data[:, :-1]  # all columns except last
-    y = data[:, -1]   # last column as target
-
-    x_smoted, y_smoted = smote.fit_resample(x, y)
-
-    data[:, :-1] = x_smoted
-    data[:, -1]  = y_smoted
-
-    new_percentage_true_data_points = data_counter(data)
+    new_percentage_true_data_points = data_counter(x_smoted, y_smoted)
 
     print("The old ratio of true/false was: ", old_percentage_true_data_points, ":", 100 - old_percentage_true_data_points)
     print("The new ratio of true/false is: ", new_percentage_true_data_points, ":", 100 - new_percentage_true_data_points)
 
+    return x_smoted, y_smoted
 
-def decision_tree():
 
-def random_forest():
-    """
-    creates a random forest model to predict whether
-    a certain day is picni-able
-    """
+# def decision_tree():
+
+# def random_forest():
+#     """
+#     creates a random forest model to predict whether
+#     a certain day is picni-able
+#     """
