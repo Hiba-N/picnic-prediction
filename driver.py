@@ -1,16 +1,29 @@
 # the driver script should at least take one command line argument, 
 # the filename which contains the data.
+
+
 # defensive programming for the command line argument(s)
-# the functions should take arguments and, if required, return values.
+
+
+
 # you must have a function for loading the data you will be using.
+
+
 # functions can not access variables that are not passed to them!
 # you must perform at least four statistical or model-fitting techniques on the data, 
 # each one in its own function. 
+
+#1 - check data normalacy (like last term)
+#2 - regression (multi-variate?)
+#3 - finding best k value + decision tree
+#4 - fit to a model (simple eg random forest model) (literature review)
+
+
 # The function should report the results of the particular analysis:
     # probability/statistical estimators computations
     # model fitting
     # statistical hypothesis testing
-    # statistical power analysis
+    # statistical  power analysis
     # classification model
 
 
