@@ -1,12 +1,25 @@
+import utilities as util
+
 # the driver script should at least take one command line argument, 
 # the filename which contains the data.
 
 
 # defensive programming for the command line argument(s)
 
+def main(filepath):
 
+    data = util.load_data(filepath) #data is loaded, NA containing rows deleted and new columns created
 
-# you must have a function for loading the data you will be using.
+    percentage_true_data_points = util.preprocessing(data) #data is checked for balance between classes, and correlation between variables
+    recall_value = util.logistic_regression(data)
+    
+    if (percentage_true_data_points < 60 or percentage_true_data_points > 40) and recall_value < 0.7:
+        data = util.smote(data) #synthetic data is created using smote algorithm to balance the classes
+
+    decision_tree_model = desicion_tree(data)
+    random_forest_model = random_forest(data)
+    
+
 
 
 # functions can not access variables that are not passed to them!
