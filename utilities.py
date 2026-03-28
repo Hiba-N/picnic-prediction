@@ -7,6 +7,15 @@ def load(filepath):
     also creates appropriate columns needed for analysis
     """
 
+    data = pd.read_csv(filepath)
+    
+    #extracting year from date column as we may choose to use year as a predictand
+    #to account for climate warming, or general decadal changes in weather patterns
+    data['DATE'] = pd.to_datetime('DATE')
+    data['YEAR'] = data.dt.year
+
+    return data #returning loaded data as a geopandas data frame for analysis
+
 
 def examine():
     """
